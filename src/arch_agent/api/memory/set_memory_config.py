@@ -1,28 +1,25 @@
 from http import HTTPStatus
 from typing import Any, cast
-from urllib.parse import quote
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.consolidator_config import ConsolidatorConfig
 from ...models.error import Error
-from ...models.tool_result_payload import ToolResultPayload
+from ...models.validation_error import ValidationError
 from ...types import Response
 
 
 def _get_kwargs(
-    id: str,
     *,
-    body: ToolResultPayload,
+    body: ConsolidatorConfig,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/toolresult/{id}".format(
-            id=quote(str(id), safe=""),
-        ),
+        "url": "/memory/config",
     }
 
     _kwargs["json"] = body.to_dict()
@@ -33,15 +30,22 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | Error | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Any | Error | ValidationError | None:
     if response.status_code == 200:
         response_200 = cast(Any, None)
         return response_200
 
     if response.status_code == 400:
-        response_400 = Error.from_dict(response.json())
+        response_400 = ValidationError.from_dict(response.json())
 
         return response_400
+
+    if response.status_code == 404:
+        response_404 = Error.from_dict(response.json())
+
+        return response_404
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -49,7 +53,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | Error]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | Error | ValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -59,32 +65,25 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
-    id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: ToolResultPayload,
-) -> Response[Any | Error]:
-    """Resolve a provided tool call result
-
-     Called by the external tool server to provide the result of a tool call
-    that was previously emitted via `provided_toolcall` event during a chat stream.
+    body: ConsolidatorConfig,
+) -> Response[Any | Error | ValidationError]:
+    """Update memory consolidation config
 
     Args:
-        id (str):
-        body (ToolResultPayload): Payload for resolving a client-provided tool call result.
-            Example: {'result': [{'text': 'Operation completed successfully', 'image_url': ''}],
-            'error_message': ''}.
+        body (ConsolidatorConfig): Memory consolidation configuration. Example: {'Model': 'gpt-4',
+            'Enabled': True, 'Instruction': "Summarize the day's activity"}.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Error]
+        Response[Any | Error | ValidationError]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         body=body,
     )
 
@@ -96,64 +95,50 @@ def sync_detailed(
 
 
 def sync(
-    id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: ToolResultPayload,
-) -> Any | Error | None:
-    """Resolve a provided tool call result
-
-     Called by the external tool server to provide the result of a tool call
-    that was previously emitted via `provided_toolcall` event during a chat stream.
+    body: ConsolidatorConfig,
+) -> Any | Error | ValidationError | None:
+    """Update memory consolidation config
 
     Args:
-        id (str):
-        body (ToolResultPayload): Payload for resolving a client-provided tool call result.
-            Example: {'result': [{'text': 'Operation completed successfully', 'image_url': ''}],
-            'error_message': ''}.
+        body (ConsolidatorConfig): Memory consolidation configuration. Example: {'Model': 'gpt-4',
+            'Enabled': True, 'Instruction': "Summarize the day's activity"}.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Error
+        Any | Error | ValidationError
     """
 
     return sync_detailed(
-        id=id,
         client=client,
         body=body,
     ).parsed
 
 
 async def asyncio_detailed(
-    id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: ToolResultPayload,
-) -> Response[Any | Error]:
-    """Resolve a provided tool call result
-
-     Called by the external tool server to provide the result of a tool call
-    that was previously emitted via `provided_toolcall` event during a chat stream.
+    body: ConsolidatorConfig,
+) -> Response[Any | Error | ValidationError]:
+    """Update memory consolidation config
 
     Args:
-        id (str):
-        body (ToolResultPayload): Payload for resolving a client-provided tool call result.
-            Example: {'result': [{'text': 'Operation completed successfully', 'image_url': ''}],
-            'error_message': ''}.
+        body (ConsolidatorConfig): Memory consolidation configuration. Example: {'Model': 'gpt-4',
+            'Enabled': True, 'Instruction': "Summarize the day's activity"}.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Error]
+        Response[Any | Error | ValidationError]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         body=body,
     )
 
@@ -163,33 +148,26 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: ToolResultPayload,
-) -> Any | Error | None:
-    """Resolve a provided tool call result
-
-     Called by the external tool server to provide the result of a tool call
-    that was previously emitted via `provided_toolcall` event during a chat stream.
+    body: ConsolidatorConfig,
+) -> Any | Error | ValidationError | None:
+    """Update memory consolidation config
 
     Args:
-        id (str):
-        body (ToolResultPayload): Payload for resolving a client-provided tool call result.
-            Example: {'result': [{'text': 'Operation completed successfully', 'image_url': ''}],
-            'error_message': ''}.
+        body (ConsolidatorConfig): Memory consolidation configuration. Example: {'Model': 'gpt-4',
+            'Enabled': True, 'Instruction': "Summarize the day's activity"}.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Error
+        Any | Error | ValidationError
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
             body=body,
         )

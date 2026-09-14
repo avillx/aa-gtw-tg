@@ -1,40 +1,29 @@
 from http import HTTPStatus
-from typing import Any, cast
-from urllib.parse import quote
+from typing import Any
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.error import Error
+from ...models.consolidator_config import ConsolidatorConfig
 from ...types import Response
 
 
-def _get_kwargs(
-    agent: str,
-    session: str,
-) -> dict[str, Any]:
+def _get_kwargs() -> dict[str, Any]:
 
     _kwargs: dict[str, Any] = {
-        "method": "delete",
-        "url": "/session/{agent}/{session}".format(
-            agent=quote(str(agent), safe=""),
-            session=quote(str(session), safe=""),
-        ),
+        "method": "get",
+        "url": "/memory/config",
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | Error | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ConsolidatorConfig | None:
     if response.status_code == 200:
-        response_200 = cast(Any, None)
+        response_200 = ConsolidatorConfig.from_dict(response.json())
+
         return response_200
-
-    if response.status_code == 400:
-        response_400 = Error.from_dict(response.json())
-
-        return response_400
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -42,7 +31,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | Error]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ConsolidatorConfig]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -52,31 +41,20 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
-    agent: str,
-    session: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Response[Any | Error]:
-    """Delete a session
-
-     Deletes a session and all its messages. This action is irreversible.
-
-    Args:
-        agent (str):
-        session (str):
+) -> Response[ConsolidatorConfig]:
+    """Get memory consolidation config
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Error]
+        Response[ConsolidatorConfig]
     """
 
-    kwargs = _get_kwargs(
-        agent=agent,
-        session=session,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -86,60 +64,39 @@ def sync_detailed(
 
 
 def sync(
-    agent: str,
-    session: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Any | Error | None:
-    """Delete a session
-
-     Deletes a session and all its messages. This action is irreversible.
-
-    Args:
-        agent (str):
-        session (str):
+) -> ConsolidatorConfig | None:
+    """Get memory consolidation config
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Error
+        ConsolidatorConfig
     """
 
     return sync_detailed(
-        agent=agent,
-        session=session,
         client=client,
     ).parsed
 
 
 async def asyncio_detailed(
-    agent: str,
-    session: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Response[Any | Error]:
-    """Delete a session
-
-     Deletes a session and all its messages. This action is irreversible.
-
-    Args:
-        agent (str):
-        session (str):
+) -> Response[ConsolidatorConfig]:
+    """Get memory consolidation config
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Error]
+        Response[ConsolidatorConfig]
     """
 
-    kwargs = _get_kwargs(
-        agent=agent,
-        session=session,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -147,31 +104,21 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    agent: str,
-    session: str,
     *,
     client: AuthenticatedClient | Client,
-) -> Any | Error | None:
-    """Delete a session
-
-     Deletes a session and all its messages. This action is irreversible.
-
-    Args:
-        agent (str):
-        session (str):
+) -> ConsolidatorConfig | None:
+    """Get memory consolidation config
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Error
+        ConsolidatorConfig
     """
 
     return (
         await asyncio_detailed(
-            agent=agent,
-            session=session,
             client=client,
         )
     ).parsed

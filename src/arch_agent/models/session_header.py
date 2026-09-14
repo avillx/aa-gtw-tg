@@ -10,17 +10,16 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.message_dto import MessageDTO
-    from ..models.session_extras import SessionExtras
+    from ..models.session_header_extras import SessionHeaderExtras
 
 
-T = TypeVar("T", bound="Session")
+T = TypeVar("T", bound="SessionHeader")
 
 
 @_attrs_define
-class Session:
-    """A session represents a conversation with an agent.
-    It contains the message history, token usage, and timestamps.
+class SessionHeader:
+    """Metadata for a single session. The `error` field is only present for
+    broken (unreadable) session headers.
 
         Attributes:
             session_id (str):
@@ -28,9 +27,8 @@ class Session:
             output_tokens (int):
             created_at (datetime.datetime):
             updated_at (datetime.datetime):
-            messages (list[MessageDTO]):
-            extras (SessionExtras | Unset):
-            error (str | Unset):
+            extras (SessionHeaderExtras | Unset):
+            error (str | Unset): Present only when the session header is broken.
     """
 
     session_id: str
@@ -38,8 +36,7 @@ class Session:
     output_tokens: int
     created_at: datetime.datetime
     updated_at: datetime.datetime
-    messages: list[MessageDTO]
-    extras: SessionExtras | Unset = UNSET
+    extras: SessionHeaderExtras | Unset = UNSET
     error: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -53,11 +50,6 @@ class Session:
         created_at = self.created_at.isoformat()
 
         updated_at = self.updated_at.isoformat()
-
-        messages = []
-        for messages_item_data in self.messages:
-            messages_item = messages_item_data.to_dict()
-            messages.append(messages_item)
 
         extras: dict[str, Any] | Unset = UNSET
         if not isinstance(self.extras, Unset):
@@ -74,7 +66,6 @@ class Session:
                 "output_tokens": output_tokens,
                 "created_at": created_at,
                 "updated_at": updated_at,
-                "messages": messages,
             }
         )
         if extras is not UNSET:
@@ -86,8 +77,7 @@ class Session:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.message_dto import MessageDTO
-        from ..models.session_extras import SessionExtras
+        from ..models.session_header_extras import SessionHeaderExtras
 
         d = dict(src_dict)
         session_id = d.pop("session_id")
@@ -100,35 +90,27 @@ class Session:
 
         updated_at = datetime.datetime.fromisoformat(d.pop("updated_at"))
 
-        messages = []
-        _messages = d.pop("messages")
-        for messages_item_data in _messages:
-            messages_item = MessageDTO.from_dict(messages_item_data)
-
-            messages.append(messages_item)
-
         _extras = d.pop("extras", UNSET)
-        extras: SessionExtras | Unset
+        extras: SessionHeaderExtras | Unset
         if isinstance(_extras, Unset):
             extras = UNSET
         else:
-            extras = SessionExtras.from_dict(_extras)
+            extras = SessionHeaderExtras.from_dict(_extras)
 
         error = d.pop("error", UNSET)
 
-        session = cls(
+        session_header = cls(
             session_id=session_id,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             created_at=created_at,
             updated_at=updated_at,
-            messages=messages,
             extras=extras,
             error=error,
         )
 
-        session.additional_properties = d
-        return session
+        session_header.additional_properties = d
+        return session_header
 
     @property
     def additional_keys(self) -> list[str]:

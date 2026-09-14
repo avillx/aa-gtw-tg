@@ -6,34 +6,33 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.completion_event_type import CompletionEventType
-
 if TYPE_CHECKING:
     from ..models.tool_call import ToolCall
 
 
-T = TypeVar("T", bound="CompletionEvent")
+T = TypeVar("T", bound="ConsolidationCompletionEvent")
 
 
 @_attrs_define
-class CompletionEvent:
-    """A successful completion chunk. Emitted with type `complete`.
+class ConsolidationCompletionEvent:
+    """A completion event emitted during memory consolidation.
+    Note: for this stream the `type` field is emitted as an empty string.
 
-    Attributes:
-        type_ (CompletionEventType):
-        done (bool): Whether this is the final completion chunk.
-        completion (str): The completion text chunk.
-        tool_calls (list[ToolCall]): Tool calls made by the model.
+        Attributes:
+            type_ (str): Always empty for consolidation events.
+            done (bool):
+            completion (str):
+            tool_calls (list[ToolCall]):
     """
 
-    type_: CompletionEventType
+    type_: str
     done: bool
     completion: str
     tool_calls: list[ToolCall]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        type_ = self.type_.value
+        type_ = self.type_
 
         done = self.done
 
@@ -62,7 +61,7 @@ class CompletionEvent:
         from ..models.tool_call import ToolCall
 
         d = dict(src_dict)
-        type_ = CompletionEventType(d.pop("type"))
+        type_ = d.pop("type")
 
         done = d.pop("done")
 
@@ -75,15 +74,15 @@ class CompletionEvent:
 
             tool_calls.append(tool_calls_item)
 
-        completion_event = cls(
+        consolidation_completion_event = cls(
             type_=type_,
             done=done,
             completion=completion,
             tool_calls=tool_calls,
         )
 
-        completion_event.additional_properties = d
-        return completion_event
+        consolidation_completion_event.additional_properties = d
+        return consolidation_completion_event
 
     @property
     def additional_keys(self) -> list[str]:
